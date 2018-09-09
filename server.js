@@ -65,7 +65,8 @@ app.get('/apps', (req, res) => {
   })
 });
 
-app.get('/app/:appId', (req, res) => { 
+// app detailed infomation includes app, objects and its properties
+app.get('/app/:appId', (req, res) => {
   let appId = req.params.appId;
   config = auth_params(appId)
   qsocks.ConnectOpenApp(config)
@@ -137,7 +138,7 @@ app.get('/app/:appId', (req, res) => {
   })
 });
 
-
+// Meta data infomation includes app, objects and its properties
 app.get('/metadata', (req, res) => {
   let apps, app_objects, obj_props = []
   config = auth_params("doclists")
