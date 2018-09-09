@@ -1,0 +1,1 @@
+# qlik-alation-connector
