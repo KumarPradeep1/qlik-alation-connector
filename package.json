@@ -1,0 +1,20 @@
+{
+  "name": "qlik-alation-connector",
+  "version": "1.0.0",
+  "description": "connector for accessing qliksense data to alation as datasource",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "VelPradeep",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "eslint": "^5.5.0",
+    "express": "^4.16.3",
+    "morgan": "^1.9.0",
+    "nodemon": "^1.18.4",
+    "qsocks": "^3.2.1"
+  }
+}
