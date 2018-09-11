@@ -19,6 +19,9 @@ module.exports = {
       PublishTime: {
         type: Sequelize.STRING
       },
+      LastReloadTime: {
+        type: Sequelize.STRING
+      },
       Thumbnail: {
         type: Sequelize.STRING
       },
