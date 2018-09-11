@@ -21,7 +21,7 @@ routes.get('/', (req, response) => {
     req.end();
 });
 routes.get('/getapps', (req, res) => {  
-  models.AppObject.findAll().then(function(datas){ 
+  models.App.findAll().then(function(datas){
     res.send(datas);
   }) 
 });
@@ -41,12 +41,12 @@ routes.get('/apps', (req, res) => {
       doclist.forEach(function(values,index){
         let qMetavalue = values.qMeta; 
         let stream = qMetavalue.stream;
-        let stream_id = "";
+        let stream_id = null;
         if(stream){
           stream_id = stream.id;
         }
         let appid = values.qDocId;
-        let default_params = {"id":appid,"Name": values.qDocName,"AppId": appid,  "Description": qMetavalue.description, "PublishTime": qMetavalue.publishTime,"LastReloadTime": values.qLastReloadTime,"Thumbnail": values.qThumbnail.qUrl,"CreatedDate": qMetavalue.createdDate,"ModifiedDate": qMetavalue.modifiedDate,"ModifiedByUserName": "","Owner_ID": "","Stream_ID": stream_id,"SavedInProductVersion": "","MigrationHash": "","DynamicColor": qMetavalue.dynamicColor,"SourceAppId": "","TargetAppId": ""};
+        let default_params = {"id":appid,"Name": values.qDocName,"AppId": appid,  "Description": qMetavalue.description, "PublishTime": qMetavalue.publishTime,"LastReloadTime": values.qLastReloadTime,"Thumbnail": values.qThumbnail.qUrl,"CreatedDate": qMetavalue.createdDate,"ModifiedDate": qMetavalue.modifiedDate,"ModifiedByUserName": "","Owner_ID": null,"Stream_ID": stream_id,"SavedInProductVersion": "","MigrationHash": "","DynamicColor": qMetavalue.dynamicColor,"SourceAppId": null,"TargetAppId": null};
 
         models.App.findOne({ where: {id: appid} }).then(status => {
            if(!status)

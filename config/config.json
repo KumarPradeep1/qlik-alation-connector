@@ -1,8 +1,10 @@
 {
   "development": {
-    "host": "localhost",
-    "dialect": "sqlite",
-    "storage": "./qlik-dev-db.sqlite3"
+    "host": "qlik.mashey.com",
+    "dialect": "postgres",
+    "database": "alatation_test_db",
+    "username": "postgres",
+    "password": "postgres"
   },
   "test": {
     "host": "localhost",
