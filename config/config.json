@@ -1,0 +1,17 @@
+{
+  "development": {
+    "host": "localhost",
+    "dialect": "sqlite",
+    "storage": "./qlik-dev-db.sqlite3"
+  },
+  "test": {
+    "host": "localhost",
+    "dialect": "sqlite",
+    "storage": "./qlik-test-db.sqlite3"
+  },
+  "production": {
+    "host": "localhost",
+    "dialect": "sqlite",
+    "storage": "./qlik-prod-db.sqlite3"
+  }
+}
