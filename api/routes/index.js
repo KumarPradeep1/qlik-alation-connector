@@ -7,8 +7,8 @@ const Sequelize = require('sequelize');
 const models = require('../../models');
 const Op = Sequelize.Op;
 let objects_info = [];
- let result = {}; let qlik_app = ''; let qInfos;
-let required_objects = ["kpi","barchart","combochart", "linechart","table"]; 
+let result = {}; let qlik_app = ''; let qInfos;
+let required_objects = ["kpi","barchart","combochart", "linechart","table"];  
 // GET Default Routes.
 routes.get('/', (req, response) => {
   var url="http://localhost:3000/apps";
@@ -22,6 +22,11 @@ routes.get('/', (req, response) => {
 });
 routes.get('/getapps', (req, res) => {  
   models.App.findAll().then(function(datas){
+    res.send(datas);
+  }) 
+});
+routes.get('/getobjects', (req, res) => {  
+  models.AppObject.findAll().then(function(datas){
     res.send(datas);
   }) 
 });
@@ -75,7 +80,7 @@ routes.get('/appobjects', (req, res) => {
       if(id)
       appIds.push(id);
     })
-    getAppdatas(['4fdd8d12-ef72-4edc-b10d-2284ca426a84'],res);
+    getAppdatas(['b5dd4c99-f4d5-4c0a-91ff-c9a9634cb39c'],res);
     res.send(appIds);
   }) 
 
@@ -100,21 +105,17 @@ let authenticate = function(appid){
 }
 let elements_info = function(data){
   let elements= [];
-  data.forEach(function(element){
-    if (required_objects.includes(element.qType))
-      elements.push({ qType: element.qType, qId: element.qId  })
+  data.forEach(function(element){  
+    if(required_objects.includes(element.qType))
+        elements.push({ qType: element.qType, qId: element.qId  })
   });
   // console.log(elements);
   return elements;
 }
-let store_appobject = function(appdata,appId){  
-
+let store_appobject = function(appdata,appId){   
   appdata.forEach(function(value,i){
     let object_id = value.id;
-    let default_params = {"AppId":appId,"EngineObjectId":object_id,"ObjectType":value.type,"dimension":value.dimensions,"measure":value.measures};
-    // models.AppObject.findAll().then(data => {
-    //   console.log(data.length);
-    // });
+    let default_params = {"AppId":appId,"EngineObjectId":object_id,"Title":value.title,"ObjectType":value.type,"dimension":value.dimensions,"measures":value.measures}; 
      
     models.AppObject.findOne({ where: {EngineObjectId: object_id} }).then(status => {
       if(!status)
@@ -122,10 +123,8 @@ let store_appobject = function(appdata,appId){
     }) 
   });
 }
-let getAppdatas = function(appIds,res){
-  console.log(appIds);
-  let appidslength = appIds.length;
-  
+let getAppdatas = function(appIds,res){ 
+  let appidslength = appIds.length; 
   appIds.forEach(function(appId,i){ 
    i = i + 1;  
   let config = authenticate(appId)
@@ -138,12 +137,11 @@ let getAppdatas = function(appIds,res){
     qInfos = allinfos.qInfos;
     return elements_info(qInfos);
   })
-  .then(function(elements){ 
+  .then(function(elements){   
     var promises = elements.map(element => { 
       return new Promise((resolve, reject) => { 
-        let title, info, headdata,tableproperty,measures;
-        info = {id: element.qId, type: element.qType};
-
+        let title, info, dimensions,tableproperty,measures;
+        info = {id: element.qId, type: element.qType}; 
         qlik_app.getObject(info.id).then(object => {
           if(info.type == 'table'){
             object.getLayout().then(function(tableproperty) { 
@@ -151,24 +149,27 @@ let getAppdatas = function(appIds,res){
             });
           }
 
-          object.getEffectiveProperties().then(function(property) { 
-            if(property.qHyperCubeDef.qDimensions)
-              headdata = property.qHyperCubeDef.qDimensions;
+          object.getEffectiveProperties().then(function(property) {  
+            
+            if(property.qHyperCubeDef){
+              if(property.qHyperCubeDef.qDimensions)
+                dimensions = property.qHyperCubeDef.qDimensions;
 
-            if(property.qHyperCubeDef.qMeasures)
-              measures = property.qHyperCubeDef.qMeasures;
-
-            if(property.title){
-              title = property.title
-            }else if(property.qHyperCubeDef.qMeasures[0].qDef.qLabel){
-              title = property.qHyperCubeDef.qMeasures[0].qDef.qLabel
+              if(property.qHyperCubeDef.qMeasures)
+                measures = property.qHyperCubeDef.qMeasures;
+              let property_title = property.title;
+              if(property_title){ 
+                title = typeof(property_title) == "object" ? property_title.qStringExpression.qExpr : property_title;
+              }else if(property.qHyperCubeDef.qMeasures[0].qDef.qLabel){
+                title = property.qHyperCubeDef.qMeasures[0].qDef.qLabel
+              }else{
+                title = '';
+              } 
             }else{
-              title = null;
-            } 
-            info["title"] = title;
-            info["dimensions"] = headdata;
-            info["measures"] = measures; 
-            objects_info.push(info);
+              title = '';dimensions = '';measures = '';
+            }  
+            Object.assign(info,{title: title, dimensions: dimensions, measures: measures}); 
+            objects_info.push(info); 
             resolve(info);
           }); 
         })
@@ -177,13 +178,11 @@ let getAppdatas = function(appIds,res){
     });
 
    Promise.all(promises).then(function(values){ 
-      result[appId] = values; 
-      if(appidslength == 1){ 
-        store_appobject(values,appId);
-        res.send(result);  
+      //result[appId] = values;   
+      if(appidslength == 1){  
+        store_appobject(values,appId); 
       }else if(i == appidslength){
-        store_appobject(values,appId);
-        res.send(result);  
+        store_appobject(values,appId); 
       }
     }); 
   })

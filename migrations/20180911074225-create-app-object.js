@@ -14,6 +14,9 @@ module.exports = {
       EngineObjectId: {
         type: Sequelize.STRING
       },
+      Title: {
+        type: Sequelize.STRING
+      },
       ObjectType: {
         type: Sequelize.STRING
       },

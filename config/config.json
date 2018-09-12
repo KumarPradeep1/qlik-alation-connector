@@ -2,7 +2,7 @@
   "development": {
     "host": "qlik.mashey.com",
     "dialect": "postgres",
-    "database": "alatation_test_db",
+    "database": "qliksense_data",
     "username": "postgres",
     "password": "postgres"
   },
