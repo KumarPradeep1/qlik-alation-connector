@@ -8,15 +8,24 @@ const Sequelize = require('sequelize');
 const models = require('../../models');
 
 // Get Streams
-routes.get('/streams', (req, response) => {
+routes.get('/streams', (req, response) => { 
   var params = { path: "https://qlik.mashey.com/hdr/qrs/stream/full",
                  query : {} }
   var options = authenticate(params)
-  axios(options).then(function (res) {
-    console.log(res.data)
+  axios(options).then(function (res) { 
+    let streamsData = res.data;
+    if(streamsData){
+      streamsData.forEach(function(values,index){
+        let streamid = values.id;
+        let stream_params = {"id":streamid,"Name":values.name, "CreatedDate":values.createdDate, "ModifiedDate":values.modifiedDate, "ModifiedByUserName":values.ModifiedByUserName, "Owner_ID":values.owner.id}
+        models.Streams.findOne({ where: {id: streamid} }).then(status => {
+           if(!status)
+              models.Streams.create(stream_params);
+        }) 
+      })
+    }
     response.send(res.data)
-  }).catch(function (error) {
-    console.log("ddddddddddddd")
+  }).catch(function (error) { 
     console.log(error);
   });
 });

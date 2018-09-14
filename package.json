@@ -21,6 +21,7 @@
     "sqlite3": "^4.0.2"
   },
   "devDependencies": {
+    "axios": "^0.18.0",
     "pg": "^7.4.3"
   }
 }
