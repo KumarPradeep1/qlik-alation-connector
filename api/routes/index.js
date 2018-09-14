@@ -29,23 +29,7 @@ var https = require('https');
 
 
 
-routes.get('/getapps', (req, res) => {  
-  models.App.findAll().then(function(datas){
-    res.send(datas);
-  }) 
-});
-routes.get('/getobjects', (req, res) => {  
-  models.AppObject.findAll().then(function(datas){
-    res.send(datas);
-  }) 
-});
-routes.get('/destroy',(req,res)=>{
-  models.App.destroy({
-  where: {},
-  truncate: true
-  })
-  res.send('destroyed');
-})
+
 // GET Apps.
 routes.get('/apps', (req, res) => { 
   let config = authenticate("doclists")
@@ -77,7 +61,9 @@ routes.get('/apps', (req, res) => {
   }) 
 });
 
-
+routes.get('/app/:appId/objects', (req, res) => {  
+  getAppdatas([req.params.appId],res);
+});
 
 //Get App objects
 routes.get('/appobjects', (req, res) => {  
@@ -228,3 +214,21 @@ let getAppdatas = function(appIds,res){
 });
 
 }
+
+routes.get('/getapps', (req, res) => {  
+  models.App.findAll().then(function(datas){
+    res.send(datas);
+  }) 
+});
+routes.get('/getobjects', (req, res) => {  
+  models.AppObject.findAll().then(function(datas){
+    res.send(datas);
+  }) 
+});
+routes.get('/destroy',(req,res)=>{
+  models.App.destroy({
+  where: {},
+  truncate: true
+  })
+  res.send('destroyed');
+})
