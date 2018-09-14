@@ -8,7 +8,7 @@ const models = require('../../models');
 const Op = Sequelize.Op;
 let objects_info = [];
 let result = {}; let qlik_app = ''; let qInfos;
-let required_objects = ["kpi","barchart","combochart", "linechart","table"];  
+let required_objects = ["kpi","barchart","combochart", "linechart","table"]; 
 // GET Default Routes.
 
 routes.get('/', (req, response) => {
@@ -77,6 +77,8 @@ routes.get('/apps', (req, res) => {
   }) 
 });
 
+
+
 //Get App objects
 routes.get('/appobjects', (req, res) => {  
   models.App.findAll().then(function(appdatas){
@@ -89,7 +91,7 @@ routes.get('/appobjects', (req, res) => {
       if(id)
       appIds.push(id);
     })
-    getAppdatas(['b5dd4c99-f4d5-4c0a-91ff-c9a9634cb39c'],res);
+    getAppdatas(['4fdd8d12-ef72-4edc-b10d-2284ca426a84'],res);
     res.send(appIds);
   }) 
 
@@ -123,13 +125,35 @@ let elements_info = function(data){
 }
 let store_appobject = function(appdata,appId){   
   appdata.forEach(function(value,i){
+    let whereConditions;
     let object_id = value.id;
-    let default_params = {"AppId":appId,"EngineObjectId":object_id,"Title":value.title,"ObjectType":value.type,"dimension":value.dimensions,"measures":value.measures}; 
-     
-    models.AppObject.findOne({ where: {EngineObjectId: object_id} }).then(status => {
-      if(!status)
-      models.AppObject.create(default_params);      
-    }) 
+    let measures_data = value.measures; 
+       
+    let default_params = {"AppId":appId,"EngineObjectId":object_id,"Title":value.title,"ObjectType":value.type,"dimension":value.dimensions };  
+    if(measures_data.length > 0){ 
+      measures_data.forEach(function(values,index){
+        let qMeasuresdef = measures_data[index].qDef.qDef;   
+            whereConditions =  { where: {EngineObjectId: object_id}}; 
+            if(qMeasuresdef){
+              whereConditions =  { where: {EngineObjectId: object_id , measures: qMeasuresdef } };
+            }  
+
+            models.AppObject.findOne(whereConditions).then(status => { 
+              if(!status){
+                default_params.measures = qMeasuresdef;
+                models.AppObject.create(default_params);      
+              }
+            })
+      });  
+    }else{
+      whereConditions =  { where: {EngineObjectId: object_id}}; 
+      models.AppObject.findOne(whereConditions).then(status => { 
+        if(!status){
+          default_params.measures = '';
+          models.AppObject.create(default_params);      
+        }
+      })
+    }
   });
 }
 let getAppdatas = function(appIds,res){ 
@@ -164,8 +188,9 @@ let getAppdatas = function(appIds,res){
               if(property.qHyperCubeDef.qDimensions)
                 dimensions = property.qHyperCubeDef.qDimensions;
 
-              if(property.qHyperCubeDef.qMeasures)
-                measures = property.qHyperCubeDef.qMeasures;
+              if(property.qHyperCubeDef.qMeasures){
+                measures = property.qHyperCubeDef.qMeasures; 
+              }
               let property_title = property.title;
               if(property_title){ 
                 title = typeof(property_title) == "object" ? property_title.qStringExpression.qExpr : property_title;

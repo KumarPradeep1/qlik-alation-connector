@@ -24,7 +24,7 @@ module.exports = {
         type: Sequelize.JSON
       },
       measures: {
-        type: Sequelize.JSON
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
