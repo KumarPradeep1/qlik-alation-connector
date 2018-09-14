@@ -10,6 +10,7 @@ let objects_info = [];
 let result = {}; let qlik_app = ''; let qInfos;
 let required_objects = ["kpi","barchart","combochart", "linechart","table"];  
 // GET Default Routes.
+
 routes.get('/', (req, response) => {
   var url="http://localhost:3000/apps";
   var req = http.request(url,res=>{
@@ -20,6 +21,14 @@ routes.get('/', (req, response) => {
     });
     req.end();
 });
+
+
+// Get Streams
+
+var https = require('https');
+
+
+
 routes.get('/getapps', (req, res) => {  
   models.App.findAll().then(function(datas){
     res.send(datas);
