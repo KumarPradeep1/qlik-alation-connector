@@ -2,70 +2,103 @@
 
 var https = require('https');
 var axios = require('axios');
-
 const routes = require('express').Router();
 const Sequelize = require('sequelize');
 const models = require('../../models');
+const constants = require('../../config/constants.js');
 
-// Get Streams
-routes.get('/streams', (req, response) => { 
-  var params = { path: "https://qlik.mashey.com/hdr/qrs/stream/full",
-                 query : {} }
-  var options = authenticate(params)
-  axios(options).then(function (res) { 
-    let streamsData = res.data;
-    if(streamsData){
-      streamsData.forEach(function(values,index){
-        let streamid = values.id;
-        let stream_params = {"id":streamid,"Name":values.name, "CreatedDate":values.createdDate, "ModifiedDate":values.modifiedDate, "ModifiedByUserName":values.ModifiedByUserName, "Owner_ID":values.owner.id}
-        models.Streams.findOne({ where: {id: streamid} }).then(status => {
-           if(!status)
-              models.Streams.create(stream_params);
-        }) 
-      })
-    }
-    response.send(res.data)
-  }).catch(function (error) { 
-    console.log(error);
+// Authentication API
+routes.get('/user', (req, response) => {
+  var user_dir =req.query.directory+"/"+req.query.name
+  var params = { path: req.query.host+constants.USER_EXIST_API+user_dir,
+                 query : {},
+                 virtual_proxy: req.query.virtual_proxy,
+                 userdirectory: req.query.userdirectory }
+  var config = authenticate(params);
+
+  axios(config).then(function (res) {
+    console.log(res.data.value)
+    console.log(Object.keys(res.data))
+    if (res.data.value)
+      response.send({success: "true", message: constants.LOGIN_SUCCESS })
+    else
+      response.send({failure: "true", message: constants.LOGIN_FAILURE })
+  }).catch(function (error) {
+    response.send({ failure: "true", error: error.response.statusText })
   });
 });
 
-// Get All Apps for specific stream
-routes.get('/streams/:streamId', (req, response) => {
-  var params = { path: "https://qlik.mashey.com/hdr/qrs/app/full",
-                 query: {filter: "stream.id eq "+req.params.streamId} }
-  var params = { path: "https://qlik.mashey.com/hdr/qrs/app/full",
-                 query : {filter: "stream.id eq "+req.params.streamId}}
-  var options = authenticate(params)
-  axios(options).then(function (res) {
-    console.log(res.data)
+// Streams API
+routes.get('/streams', (req, response) => {
+  var params = { path: req.query.host+constants.GET_STREAMS,
+                 query : {},
+                 virtual_proxy: req.query.virtual_proxy,
+                 userdirectory: req.query.userdirectory }
+  var config = authenticate(params);
+
+  axios(config).then(function (res) {
+    let streams = res.data;
+    if(streams){
+      streams.forEach(function(values,index){
+        let streamid = values.id;
+        let stream_params = { "id": streamid,"Name": values.name, "CreatedDate":values.createdDate,
+                              "ModifiedDate": values.modifiedDate, "ModifiedByUserName": values.ModifiedByUserName, "Owner_ID":values.owner.id }
+        models.Streams.findOne({ where: {id: streamid} }).then(status => {
+           if(!status)
+              models.Streams.create(stream_params);
+        })
+      })
+    }
     response.send(res.data)
-})
+  }).catch(function (error) {
+    response.send({ error: error.code })
+  });
 });
 
-// Get All Sheets for an specific App
+// STREAM APPS API
+routes.get('/streams/:streamId', (req, response) => {
+  var params = { path: req.query.host+constants.GET_APPS,
+                 query : {filter: "stream.id eq "+req.params.streamId},
+                 proxy_name: req.query.virtual_proxy,
+                 userdirectory: req.query.userdirectory
+             }
+  var config = authenticate(params);
+  axios(config).then(function (res) {
+    console.log(res.data)
+    response.send(res.data)
+  }).catch(function (error) {
+    console.log(error);
+    response.send({ error: error.code })
+  });
+});
+
+// APP SHEETS API
 routes.get('/app/:appId/sheets', (req, response) => {
-  var params = { path: "https://qlik.mashey.com/hdr/qrs/app/object/full",
+  var params = { path: req.query.host+constants.GET_APP_OBJECTS,
                  query : {filter: "objectType eq 'sheet' and app.id eq "+req.params.appId}}
   var options = authenticate(params)
   axios(options).then(function (res) {
     console.log(res.data)
     response.send(res.data)
-})
+  }).catch(function (error) {
+    console.log(error);
+    response.send({ error: error.code })
+  });
 });
 
 let authenticate = function(params){
-  let query = Object.assign({xrfkey: 'abcdefghijklmnop'}, params.query)
+  let query = Object.assign({xrfkey: constants.XRF_KEY }, params.query)
   let config = {
     url: params.path,
     method: 'get',
     params: query,
     headers: {
         'Content-Type':'application/json',
-        'x-qlik-xrfkey' : 'abcdefghijklmnop',
-        'hdr-usr': 'MASHEY\\andrew'
+        'x-qlik-xrfkey' : constants.XRF_KEY
     }
   }
+  config.headers[''+params.virtual_proxy] = params.userdirectory
+  console.log(config.headers)
   return config;
 }
 
