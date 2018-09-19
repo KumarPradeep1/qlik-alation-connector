@@ -7,6 +7,60 @@ const Sequelize = require('sequelize');
 const models = require('../../models');
 const constants = require('../../config/constants.js');
 
+// API Authentication
+routes.post('/api/login', (req, response) => {
+  console.log(req.body)
+  var query = req.body;
+  var user = query.password.split("\\")
+  var user_dir =user[0]+"/"+user[1]
+  var params = { path: query.url+query.username+"/"+constants.USER_EXIST_API+user_dir,
+                 query : {},
+                 username: query.username,
+                 password: query.password }
+  var config = authenticate(params);
+
+  axios(config).then(function (res) {
+    console.log(res.data.value)
+    console.log(Object.keys(res.data))
+    if (res.data.value)
+      response.send({success: "true", message: constants.LOGIN_SUCCESS })
+    else
+      response.send({failure: "true", message: constants.LOGIN_FAILURE })
+  }).catch(function (error) {
+    response.send({ failure: "true", error: error.response.statusText })
+  });
+});
+
+// Streams API
+routes.post('/api/streams', (req, response) => {
+   console.log(req.body)
+  var query = req.body;
+  var user = query.password.split("\\")
+  var user_dir =user[0]+"/"+user[1]
+  var params = { path: query.url+query.username+"/"+constants.GET_STREAMS,
+                 query : {},
+                 username: query.username,
+                 password: query.password }
+  var config = authenticate(params);
+  axios(config).then(function (res) {
+    let streams = res.data;
+    if(streams){
+      streams.forEach(function(values,index){
+        let streamid = values.id;
+        let stream_params = { "id": streamid,"Name": values.name, "CreatedDate":values.createdDate,
+                              "ModifiedDate": values.modifiedDate, "ModifiedByUserName": values.ModifiedByUserName, "Owner_ID":values.owner.id }
+        models.Streams.findOne({ where: {id: streamid} }).then(status => {
+           if(!status)
+              models.Streams.create(stream_params);
+        })
+      })
+    }
+    response.send(res.data)
+  }).catch(function (error) {
+    response.send({ error: error.code })
+  });
+});
+
 // Authentication API
 routes.get('/user', (req, response) => {
   var user_dir =req.query.directory+"/"+req.query.name
@@ -94,10 +148,10 @@ let authenticate = function(params){
     params: query,
     headers: {
         'Content-Type':'application/json',
-        'x-qlik-xrfkey' : constants.XRF_KEY
+        'x-qlik-xrfkey' : constants.XRF_KEY,
     }
   }
-  config.headers[''+params.virtual_proxy] = params.userdirectory
+  config.headers[''+params.username] = params.password
   console.log(config.headers)
   return config;
 }

@@ -2,6 +2,7 @@
 
 const routes = require('express').Router();
 const http = require('http');
+var https = require('https');
 const qsocks = require('qsocks');
 const Sequelize = require('sequelize');
 const models = require('../../models');
@@ -9,8 +10,8 @@ const Op = Sequelize.Op;
 let objects_info = [];
 let result = {}; let qlik_app = ''; let qInfos;
 let required_objects = ["kpi","barchart","combochart", "linechart","table"]; 
-// GET Default Routes.
 
+// GET Default Routes.
 routes.get('/', (req, response) => {
   var url="http://localhost:3000/apps";
   var req = http.request(url,res=>{
@@ -22,22 +23,14 @@ routes.get('/', (req, response) => {
     req.end();
 });
 
-
-// Get Streams
-
-var https = require('https');
-
-
-
-
 // GET Apps.
 routes.get('/apps', (req, res) => { 
   let config = authenticate("doclists")
   qsocks.Connect(config)
   .then(function(connections) {
-    connections.getDocList().then(function(doclist) {  
+    connections.getDocList().then(function(doclist) {
       doclist.forEach(function(values,index){
-        let qMetavalue = values.qMeta; 
+        let qMetavalue = values.qMeta;
         let stream = qMetavalue.stream;
         let stream_id = null;
         if(stream){
